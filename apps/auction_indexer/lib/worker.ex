@@ -64,32 +64,38 @@ defmodule AuctionIndexer.Worker do
   defp handle_event({:bid, auction_id, new_bid, bid_timestamp}) do
     Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
-    Database.Schema.Auction.to_changeset(auction, %{
-      bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
-      updated_at: DateTime.utc_now(),
-      current_bid: new_bid
-    }) |> Database.Repo.update
+    if auction do
+      Database.Schema.Auction.to_changeset(auction, %{
+        bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
+        updated_at: DateTime.utc_now(),
+        current_bid: new_bid
+      }) |> Database.Repo.update
+    end
   end
 
   defp handle_event({:buyout, auction_id, new_buyout}) do
     Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
-    Database.Repo.get(Database.Schema.Auction, auction_id)
-    |> Database.Schema.Auction.to_changeset(%{
-      price: new_buyout,
-      updated_at: DateTime.utc_now()
-    }) 
-    |> Database.Repo.update
+    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    if auction do
+      Database.Schema.Auction.to_changeset(auction, %{
+        price: new_buyout,
+        updated_at: DateTime.utc_now()
+      }) 
+      |> Database.Repo.update
+    end
   end
 
   defp handle_event({:sold, auction_id, type}) do
     Logger.info("Persisting auction #{auction_id}")
-    Database.Repo.get(Database.Schema.Auction, auction_id)
-    |> Database.Schema.Auction.to_changeset(%{
-      sold: true,
-      type: type,
-      updated_at: DateTime.utc_now()
-    }) 
-    |> Database.Repo.update
+    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    if auction do
+        Database.Schema.Auction.to_changeset(auction, %{
+        sold: true,
+        type: type,
+        updated_at: DateTime.utc_now()
+      }) 
+      |> Database.Repo.update
+    end
   end
 
   defp mark_as_processed(message) do
