@@ -10,7 +10,7 @@ defmodule MessageIndexer.Indexer do
     GenServer.cast(__MODULE__, {:message, message})
   end
 
-  def handle_cast({:message, message}, state) do
+  def handle_cast({:message, %{"MessageType" => "Auction"} = message}, state) do
     message = %Database.Schema.Message{
       id: message["MessageId"],
       type: message["MessageType"],
@@ -23,6 +23,11 @@ defmodule MessageIndexer.Indexer do
     else
       Logger.error("Cannot persist message #{inspect message}, #{inspect changeset.errors}")      
     end
+    {:noreply, state}
+  end
+
+  def handle_cast({:message, message}, state) do
+    Logger.info("Dismissing message #{message["MessageId"]} of type #{message["MessageType"]}")
     {:noreply, state}
   end
 
