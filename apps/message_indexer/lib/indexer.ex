@@ -21,7 +21,7 @@ defmodule MessageIndexer.Indexer do
     if changeset.valid? == true do
       Database.Repo.insert(changeset)
     else
-      Logger.error("Cannot persist message #{message}, #{inspect changeset.errors}")      
+      Logger.error("Cannot persist message #{inspect message}, #{inspect changeset.errors}")      
     end
     {:noreply, state}
   end
