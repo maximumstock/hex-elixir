@@ -23,7 +23,7 @@ defmodule AuctionIndexer.EventParser do
   end
 
   def parse_event(%{"Action" => "CLOSE"} = event, message) do
-    {:sold, event["AuctionId"], parse_type(event)}
+    {:closed, event["AuctionId"], parse_type(event)}
   end
 
   @doc """
@@ -40,6 +40,7 @@ defmodule AuctionIndexer.EventParser do
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, message) do
     new_auction = %Database.Schema.Auction{
       id: id,
+      active: true,
       item_uuid: item_uuid,
       initial_buyout: parse_buyout(event),
       initial_bid: parse_bid(event),
@@ -62,10 +63,5 @@ defmodule AuctionIndexer.EventParser do
 
   defp parse_currency(%{"PlatBuyout" => pbuy, "PlatBid" => pbid}) when pbuy != "0" or pbid != "0", do: "Platinum"
   defp parse_currency(%{"GoldBuyout" => gbuy, "GoldBid" => gbid}) when gbuy != "0" or gbid != "0", do: "Gold"
-
-  defp parse_price(%{"PlatBuyout" => val})  when val != "0", do: String.to_integer(val)
-  defp parse_price(%{"PlatBid" => val})     when val != "0", do: String.to_integer(val)
-  defp parse_price(%{"GoldBuyout" => val})  when val != "0", do: String.to_integer(val)
-  defp parse_price(%{"GoldBid" => val})     when val != "0", do: String.to_integer(val)
 
 end

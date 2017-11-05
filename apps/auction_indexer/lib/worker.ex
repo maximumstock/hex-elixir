@@ -62,9 +62,9 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp handle_event({:bid, auction_id, new_bid, bid_timestamp}) do
-    Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
     if auction do
+      Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")      
       Database.Schema.Auction.to_changeset(auction, %{
         bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
         updated_at: DateTime.utc_now(),
@@ -74,9 +74,9 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp handle_event({:buyout, auction_id, new_buyout}) do
-    Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
     if auction do
+      Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
       Database.Schema.Auction.to_changeset(auction, %{
         price: new_buyout,
         updated_at: DateTime.utc_now()
@@ -86,16 +86,28 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp handle_event({:sold, auction_id, type}) do
-    Logger.info("Persisting auction #{auction_id}")
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
     if auction do
-        Database.Schema.Auction.to_changeset(auction, %{
-        sold: true,
-        type: type,
-        updated_at: DateTime.utc_now()
-      }) 
-      |> Database.Repo.update
+      mark_auction_as_inactive(auction, type, true)
     end
+  end
+
+  defp handle_event({:closed, auction_id, type}) do
+    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    if auction do
+      if length(auction.bids) > 0 do
+        mark_auction_as_inactive(auction, type, true)
+      end
+    end
+  end
+
+  defp mark_auction_as_inactive(auction, type, sold) do
+    Database.Schema.Auction.to_changeset(auction, %{
+      sold: sold,
+      active: false,
+      type: type,
+      updated_at: DateTime.utc_now()
+    }) |> Database.Repo.update
   end
 
   defp mark_as_processed(message) do
