@@ -1,7 +1,7 @@
 defmodule Database.Schema.Auction do
   use Ecto.Schema
 
-  @fields [:id, :item_uuid, :initial_buyout, :initial_bid, :current_bid, :currency, :type, :price, :sold, :bids, :created_at, :updated_at]
+  @fields [:id, :item_uuid, :initial_buyout, :initial_bid, :current_bid, :currency, :type, :price, :sold, :active, :bids, :created_at, :updated_at]
   @primary_key {:id, :string, autogenerate: false}
 
   schema "auctions" do
@@ -13,6 +13,7 @@ defmodule Database.Schema.Auction do
     field :type, :string, default: "tbd"
     field :price, :integer, default: 0
     field :sold, :boolean, default: false
+    field :active, :boolean, default: true
     field :bids, {:array, :map}, default: []
     field :created_at, :utc_datetime
     field :updated_at, :utc_datetime

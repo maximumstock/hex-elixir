@@ -12,6 +12,7 @@ defmodule Database.Repo.Migrations.Auctions do
       add :type, :string, default: "tbd"
       add :price, :integer, default: 0
       add :sold, :boolean, default: false
+      add :active, :boolean, default: true
       add :bids, {:array, :map}, default: []
       add :created_at, :utc_datetime
       add :updated_at, :utc_datetime
