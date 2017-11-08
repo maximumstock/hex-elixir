@@ -1,5 +1,5 @@
 defmodule AuctionIndexer.EventParser do
-  
+
   @moduledoc """
   This module exposes functions for parsing auction events.
   Each event is mapped to some internal tuple that describes

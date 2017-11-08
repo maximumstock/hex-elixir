@@ -26,7 +26,7 @@ defmodule AuctionIndexer.Worker do
     {:ok, []}
   end
 
-  def schedule() do
+  def schedule do
     Process.send_after(self(), :run, 30_000)
   end
 
@@ -36,19 +36,19 @@ defmodule AuctionIndexer.Worker do
     {:noreply, state}
   end
 
-  def run() do
+  def run do
     message = get_next_message()
     if message do
       Logger.info("Processing new auction message #{message.id}")
-      Enum.each(message.events, fn x -> 
-        x |> AuctionIndexer.EventParser.parse_event(message) |> handle_event() 
+      Enum.each(message.events, fn x ->
+        x |> AuctionIndexer.EventParser.parse_event(message) |> handle_event()
       end)
       mark_as_processed(message)
       run()
     end
   end
 
-  def get_next_message() do
+  def get_next_message do
     Database.Schema.Message
     |> where([type: "Auction", was_processed: false])
     |> order_by([asc: :created_at])
@@ -64,7 +64,7 @@ defmodule AuctionIndexer.Worker do
   defp handle_event({:bid, auction_id, new_bid, bid_timestamp}) do
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
     if auction do
-      Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")      
+      Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")     
       Database.Schema.Auction.to_changeset(auction, %{
         bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
         updated_at: DateTime.utc_now(),
@@ -77,7 +77,8 @@ defmodule AuctionIndexer.Worker do
     auction = Database.Repo.get(Database.Schema.Auction, auction_id)
     if auction do
       Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
-      Database.Schema.Auction.to_changeset(auction, %{
+      auction
+      |> Database.Schema.Auction.to_changeset(%{
         price: new_buyout,
         updated_at: DateTime.utc_now()
       }) 
@@ -102,7 +103,8 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp mark_auction_as_inactive(auction, type, sold) do
-    Database.Schema.Auction.to_changeset(auction, %{
+    auction
+    |> Database.Schema.Auction.to_changeset(%{
       sold: sold,
       active: false,
       type: type,

@@ -1,4 +1,9 @@
 defmodule MessageIndexer.Indexer do
+
+  @moduledoc """
+  Handles all parsed messages from the official HEX API
+  """
+
   use GenServer
   require Logger
 
