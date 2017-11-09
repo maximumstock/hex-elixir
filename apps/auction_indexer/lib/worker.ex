@@ -98,6 +98,8 @@ defmodule AuctionIndexer.Worker do
     if auction do
       if length(auction.bids) > 0 do
         mark_auction_as_inactive(auction, type, true)
+      else
+        mark_auction_as_inactive(auction, type, false)
       end
     end
   end
