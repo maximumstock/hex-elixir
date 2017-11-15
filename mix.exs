@@ -17,7 +17,8 @@ defmodule HexElixir.Mixfile do
   defp deps do
     [
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:phoenix, "~> 1.3"}
     ]
   end
 end
