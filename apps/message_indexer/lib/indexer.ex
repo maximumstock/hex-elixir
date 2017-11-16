@@ -19,7 +19,7 @@ defmodule MessageIndexer.Indexer do
     message = %Database.Schema.Message{
       id: message["MessageId"],
       type: message["MessageType"],
-      created_at: DateTime.utc_now(),
+      created_at: Database.Schema.Message.parse_datetime(message["MessageTime"]),
       events: message["Events"]
     }
     changeset = Database.Schema.Message.to_changeset(message)

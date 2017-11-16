@@ -1,5 +1,5 @@
 defmodule Database.Schema.Message do
-  use Ecto.Schema
+  use Ecto.Schema, Timex
 
   @fields [:id, :type, :events, :created_at]
   @primary_key {:id, :string, autogenerate: false}
@@ -17,6 +17,13 @@ defmodule Database.Schema.Message do
     |> Ecto.Changeset.cast(params, @fields)
     |> Ecto.Changeset.validate_required(@fields)
     |> Ecto.Changeset.unique_constraint(:id, [name: :messages_pkey])
+  end
+
+  defp parse_datetime(datetime) do
+    datetime
+    |> Timex.parse!(datetime, "{D}/{M}/{YYYY} {h12}:{m}:{s} {AM}")
+    |> Timex.to_datetime("Etc/UTC")
+    |> Timex.format("{ISO:Extended}")
   end
 
 end
