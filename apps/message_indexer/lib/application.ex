@@ -9,7 +9,8 @@ defmodule MessageIndexer.Application do
     # List all child processes to be supervised
     children = [
       MessageIndexer.Router,
-      MessageIndexer.Indexer
+      MessageIndexer.Indexer,
+      MessageIndexer.Worker
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
