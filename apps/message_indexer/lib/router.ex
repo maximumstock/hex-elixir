@@ -1,5 +1,6 @@
 defmodule MessageIndexer.Router do
   use Plug.Router
+  require Logger
   alias MessageIndexer.Indexer
 
   plug :match
@@ -7,6 +8,7 @@ defmodule MessageIndexer.Router do
 
   def child_spec(_opts) do
     port = Application.get_env(:message_indexer, :port) |> parse_port()
+    Logger.info("Starting Cowboy HTTP listener on port #{port}")
     Plug.Adapters.Cowboy.child_spec(:http, __MODULE__, [], [port: port])
   end
 

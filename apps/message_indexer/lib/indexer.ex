@@ -1,11 +1,12 @@
 defmodule MessageIndexer.Indexer do
 
   @moduledoc """
-  Handles all parsed messages from the official HEX API
+  GenServer that handles mapping and storing of offical HEX API messages
   """
 
   use GenServer
   require Logger
+  alias Database.{Repo, AuctionMessage}
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -16,17 +17,18 @@ defmodule MessageIndexer.Indexer do
   end
 
   def handle_cast({:process, %{"MessageType" => "Auction"} = message}, state) do
-    message = %Database.AuctionMessage{
-      id: message["MessageId"],
-      type: message["MessageType"],
-      created_at: Database.AuctionMessage.parse_datetime(message["MessageTime"]),
-      events: message["Events"]
-    }
-    changeset = Database.AuctionMessage.to_changeset(message)
-    if changeset.valid? == true do
-      Database.Repo.insert(changeset)
-    else
-      Logger.error("Cannot persist message #{inspect message}, #{inspect changeset.errors}")      
+    auction_message = AuctionMessage.from_raw_message(message)
+    result = 
+      auction_message
+      |> AuctionMessage.to_changeset()
+      |> Repo.insert()
+    
+    case result do
+      {:error, %Ecto.Changeset{errors: [id: {"has already been taken", []}]}} ->
+        Logger.warn("Already persisted auction message #{auction_message.id}: Skipping")
+      {:error, changeset} ->
+        Logger.error("Error when persisting auction message #{auction_message.id}: #{inspect changeset.errors}")
+      _ -> :ok
     end
     {:noreply, state}
   end

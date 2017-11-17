@@ -1,3 +1,3 @@
 use Mix.Config
 
-config :message_indexer, port: System.get_env("PORT")
+config :logger, level: :info
