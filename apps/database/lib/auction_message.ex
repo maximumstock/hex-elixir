@@ -44,6 +44,13 @@ defmodule Database.AuctionMessage do
     |> Database.Repo.one()
   end
 
+  def mark_as_processed(message) do
+    change = %{was_processed: true, last_processed_at: DateTime.utc_now()}
+    message
+    |> Ecto.Changeset.cast(change, Map.keys(change))
+    |> Database.Repo.update()
+  end
+
   def parse_datetime(datetime) do
     datetime
     |> Timex.parse!("{D}/{M}/{YYYY} {h12}:{m}:{s} {AM}")
