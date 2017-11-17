@@ -1,4 +1,9 @@
-defmodule Database.Schema.Message do
+defmodule Database.AuctionMessage do
+
+  @moduledoc """
+  Schema module for auction messages
+  """
+
   use Ecto.Schema, Timex
 
   @fields [:id, :type, :events, :created_at]
@@ -19,11 +24,10 @@ defmodule Database.Schema.Message do
     |> Ecto.Changeset.unique_constraint(:id, [name: :messages_pkey])
   end
 
-  defp parse_datetime(datetime) do
+  def parse_datetime(datetime) do
     datetime
-    |> Timex.parse!(datetime, "{D}/{M}/{YYYY} {h12}:{m}:{s} {AM}")
+    |> Timex.parse!("{D}/{M}/{YYYY} {h12}:{m}:{s} {AM}")
     |> Timex.to_datetime("Etc/UTC")
-    |> Timex.format("{ISO:Extended}")
   end
 
 end

@@ -27,7 +27,8 @@ defmodule Database.Mixfile do
   defp deps do
     [
       {:ecto, "~> 2.2"},
-      {:postgrex, "~> 0.13.3"}
+      {:postgrex, "~> 0.13.3"},
+      {:timex, "~> 3.1"}
     ]
   end
 end

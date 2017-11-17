@@ -1,4 +1,9 @@
-defmodule Database.Schema.Auction do
+defmodule Database.Auction do
+
+  @moduledoc """
+  Schema module for auctions
+  """
+
   use Ecto.Schema
 
   @fields [:id, :item_uuid, :initial_buyout, :initial_bid, :current_bid, :currency, :type, :price, :sold, :active, :bids, :created_at, :updated_at]
