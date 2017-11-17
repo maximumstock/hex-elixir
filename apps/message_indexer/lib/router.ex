@@ -5,7 +5,7 @@ defmodule MessageIndexer.Router do
   plug :match
   plug :dispatch
 
-  def child_spec(opts) do
+  def child_spec(_opts) do
     port = Application.get_env(:message_indexer, :port)
     port = 
       case is_integer(port) do
@@ -20,7 +20,7 @@ defmodule MessageIndexer.Router do
     
     body
     |> Poison.decode!
-    |> Indexer.handle_message
+    |> Indexer.process_message
 
     send_resp(conn, 200, "ok")
   end

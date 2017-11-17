@@ -7,22 +7,22 @@ defmodule MessageIndexer.Indexer do
   use GenServer
   require Logger
 
-  def start_link(opts) do
+  def start_link(_opts) do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def handle_message(message) do
-    GenServer.cast(__MODULE__, {:message, message})
+  def process_message(message) do
+    GenServer.cast(__MODULE__, {:process, message})
   end
 
-  def handle_cast({:message, %{"MessageType" => "Auction"} = message}, state) do
-    message = %Database.Schema.Message{
+  def handle_cast({:process, %{"MessageType" => "Auction"} = message}, state) do
+    message = %Database.AuctionMessage{
       id: message["MessageId"],
       type: message["MessageType"],
-      created_at: Database.Schema.Message.parse_datetime(message["MessageTime"]),
+      created_at: Database.AuctionMessage.parse_datetime(message["MessageTime"]),
       events: message["Events"]
     }
-    changeset = Database.Schema.Message.to_changeset(message)
+    changeset = Database.AuctionMessage.to_changeset(message)
     if changeset.valid? == true do
       Database.Repo.insert(changeset)
     else
