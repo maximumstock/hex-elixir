@@ -5,6 +5,7 @@ defmodule Database.AuctionMessage do
   """
 
   use Ecto.Schema, Timex
+  import Ecto.Query
 
   @required_fields [:id, :type, :events, :created_at]
   @optional_fiels  [:was_processed, :last_processed_at]
@@ -33,6 +34,14 @@ defmodule Database.AuctionMessage do
       created_at: parse_datetime(raw_message["MessageTime"]),
       events: raw_message["Events"]
     }
+  end
+
+  def get_next_message do
+    Database.AuctionMessage
+    |> where([type: "Auction", was_processed: false])
+    |> order_by([asc: :created_at])
+    |> first()
+    |> Database.Repo.one()
   end
 
   def parse_datetime(datetime) do

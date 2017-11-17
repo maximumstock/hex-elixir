@@ -38,7 +38,7 @@ defmodule AuctionIndexer.EventParser do
   end
 
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, message) do
-    new_auction = %Database.Schema.Auction{
+    new_auction = %Database.Auction{
       id: id,
       active: true,
       item_uuid: item_uuid,

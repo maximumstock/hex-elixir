@@ -13,31 +13,32 @@ defmodule AuctionIndexer.Worker do
   """
 
   use GenServer
-  import Ecto.Query
   require Logger
+  alias Database.AuctionMessage
+
+  @reschedule_delay 30_000
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, [], opts)
   end
 
   def init(_) do
-    schedule()
-    run()
+    schedule(0)
     {:ok, []}
   end
 
-  def schedule do
-    Process.send_after(self(), :run, 30_000)
+  def schedule(delay) do
+    Process.send_after(self(), :run, delay)
   end
 
   def handle_info(:run, state) do
+    schedule(@reschedule_delay)
     run()
-    schedule()
     {:noreply, state}
   end
 
   def run do
-    message = get_next_message()
+    message = AuctionMessage.get_next_message()
     if message do
       Logger.info("Processing new auction message #{message.id}")
       Enum.each(message.events, fn x ->
@@ -48,24 +49,16 @@ defmodule AuctionIndexer.Worker do
     end
   end
 
-  def get_next_message do
-    Database.Schema.Message
-    |> where([type: "Auction", was_processed: false])
-    |> order_by([asc: :created_at])
-    |> first()
-    |> Database.Repo.one()
-  end
-
   defp handle_event({:new, new_auction}) do
     Logger.info("Insert new auction")
     Database.Repo.insert(new_auction)
   end
 
   defp handle_event({:bid, auction_id, new_bid, bid_timestamp}) do
-    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    auction = Database.Repo.get(Database.Auction, auction_id)
     if auction do
       Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")     
-      Database.Schema.Auction.to_changeset(auction, %{
+      Database.Auction.to_changeset(auction, %{
         bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
         updated_at: DateTime.utc_now(),
         current_bid: new_bid
@@ -74,11 +67,11 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp handle_event({:buyout, auction_id, new_buyout}) do
-    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    auction = Database.Repo.get(Database.Auction, auction_id)
     if auction do
       Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
       auction
-      |> Database.Schema.Auction.to_changeset(%{
+      |> Database.Auction.to_changeset(%{
         price: new_buyout,
         updated_at: DateTime.utc_now()
       }) 
@@ -87,14 +80,14 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp handle_event({:sold, auction_id, type}) do
-    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    auction = Database.Repo.get(Database.Auction, auction_id)
     if auction do
       mark_auction_as_inactive(auction, type, true)
     end
   end
 
   defp handle_event({:closed, auction_id, type}) do
-    auction = Database.Repo.get(Database.Schema.Auction, auction_id)
+    auction = Database.Repo.get(Database.Auction, auction_id)
     if auction do
       if length(auction.bids) > 0 do
         mark_auction_as_inactive(auction, type, true)
@@ -106,7 +99,7 @@ defmodule AuctionIndexer.Worker do
 
   defp mark_auction_as_inactive(auction, type, sold) do
     auction
-    |> Database.Schema.Auction.to_changeset(%{
+    |> Database.Auction.to_changeset(%{
       sold: sold,
       active: false,
       type: type,
