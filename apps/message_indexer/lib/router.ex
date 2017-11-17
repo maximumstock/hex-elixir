@@ -6,12 +6,7 @@ defmodule MessageIndexer.Router do
   plug :dispatch
 
   def child_spec(_opts) do
-    port = Application.get_env(:message_indexer, :port)
-    port = 
-      case is_integer(port) do
-        true -> port
-        false -> port |> String.to_integer
-      end
+    port = Application.get_env(:message_indexer, :port) |> parse_port()
     Plug.Adapters.Cowboy.child_spec(:http, __MODULE__, [], [port: port])
   end
 
@@ -24,5 +19,8 @@ defmodule MessageIndexer.Router do
 
     send_resp(conn, 200, "ok")
   end
+
+  defp parse_port(port) when is_integer(port), do: port
+  defp parse_port(port), do: port |> String.to_integer
 
 end
