@@ -33,7 +33,7 @@ defmodule MessageIndexer.Indexer do
     {:noreply, state}
   end
 
-  def handle_cast({:message, message}, state) do
+  def handle_cast({:process, message}, state) do
     Logger.info("Dismissing message #{message["MessageId"]} of type #{message["MessageType"]}")
     {:noreply, state}
   end
