@@ -53,7 +53,7 @@ defmodule Database.AuctionMessage do
 
   def parse_datetime(datetime) do
     datetime
-    |> Timex.parse!("{D}/{M}/{YYYY} {h12}:{m}:{s} {AM}")
+    |> Timex.parse!("{M}/{D}/{YYYY} {h12}:{m}:{s} {AM}")
     |> Timex.to_datetime("Etc/UTC")
   end
 
