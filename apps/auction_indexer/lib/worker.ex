@@ -14,7 +14,7 @@ defmodule AuctionIndexer.Worker do
 
   use GenServer
   require Logger
-  alias Database.AuctionMessage
+  alias Database.{AuctionMessage, Auction}
 
   @reschedule_delay 30_000
 
@@ -42,78 +42,58 @@ defmodule AuctionIndexer.Worker do
     if message do
       Logger.info("Processing new auction message #{message.id}")
       Enum.each(message.events, fn x ->
-        x |> AuctionIndexer.EventParser.parse_event(message) |> handle_event()
+        x |> AuctionIndexer.EventParser.parse_event(message) |> process()
       end)
-      mark_as_processed(message)
+      AuctionMessage.mark_as_processed(message)
       run()
     end
   end
 
-  defp handle_event({:new, new_auction}) do
-    Logger.info("Insert new auction")
+  defp process({:new, new_auction}) do
     Database.Repo.insert(new_auction)
   end
 
-  defp handle_event({:bid, auction_id, new_bid, bid_timestamp}) do
-    auction = Database.Repo.get(Database.Auction, auction_id)
+  defp process({:bid, auction_id, new_bid, bid_timestamp}) do
+    auction = Database.Repo.get(Auction, auction_id)
     if auction do
-      Logger.info("Updating auction #{auction_id}: bid -> #{new_bid}")     
-      Database.Auction.to_changeset(auction, %{
+      change = %{
         bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
         updated_at: DateTime.utc_now(),
         current_bid: new_bid
-      }) |> Database.Repo.update
+      }
+      Auction.patch_auction_if_exists(auction_id, change)
     end
   end
 
-  defp handle_event({:buyout, auction_id, new_buyout}) do
-    auction = Database.Repo.get(Database.Auction, auction_id)
-    if auction do
-      Logger.info("Updating auction #{auction_id}: buyout -> #{new_buyout}")
-      auction
-      |> Database.Auction.to_changeset(%{
-        price: new_buyout,
-        updated_at: DateTime.utc_now()
-      }) 
-      |> Database.Repo.update
-    end
+  defp process({:buyout, auction_id, new_buyout, updated_at}) do
+    change = %{
+      price: new_buyout,
+      updated_at: updated_at
+    }
+    Auction.patch_auction_if_exists(auction_id, change)
   end
 
-  defp handle_event({:sold, auction_id, type}) do
-    auction = Database.Repo.get(Database.Auction, auction_id)
-    if auction do
-      mark_auction_as_inactive(auction, type, true)
-    end
-  end
-
-  defp handle_event({:closed, auction_id, type}) do
-    auction = Database.Repo.get(Database.Auction, auction_id)
-    if auction do
-      if length(auction.bids) > 0 do
-        mark_auction_as_inactive(auction, type, true)
-      else
-        mark_auction_as_inactive(auction, type, false)
-      end
-    end
-  end
-
-  defp mark_auction_as_inactive(auction, type, sold) do
-    auction
-    |> Database.Auction.to_changeset(%{
-      sold: sold,
+  defp process({:sold, auction_id, type, updated_at}) do
+    change = %{
+      sold: true,
       active: false,
       type: type,
-      updated_at: DateTime.utc_now()
-    }) |> Database.Repo.update
+      updated_at: updated_at
+    }
+    Auction.patch_auction_if_exists(auction_id, change)
   end
 
-  defp mark_as_processed(message) do
-    change = %{was_processed: true, last_processed_at: DateTime.utc_now()}
-    
-    message
-    |> Ecto.Changeset.cast(change, Map.keys(change))
-    |> Database.Repo.update()
+  defp process({:closed, auction_id, type, updated_at}) do
+    auction = Database.Repo.get(Auction, auction_id)
+    if auction do
+      change = %{
+        sold: length(auction.bids) > 0,
+        active: false,
+        type: type,
+        updated_at: updated_at
+      }
+      Auction.patch_auction_if_exists(auction_id, change)
+    end
   end
-
 
 end

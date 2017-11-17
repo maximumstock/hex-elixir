@@ -19,11 +19,11 @@ defmodule AuctionIndexer.EventParser do
   `SOLD` and `CLOSE` handlers -> just export the corresponding auctions as sales
   """
   def parse_event(%{"Action" => "SOLD"} = event, message) do
-    {:sold, event["AuctionId"], parse_type(event)}
+    {:sold, event["AuctionId"], parse_type(event), message.created_at}
   end
 
   def parse_event(%{"Action" => "CLOSE"} = event, message) do
-    {:closed, event["AuctionId"], parse_type(event)}
+    {:closed, event["AuctionId"], parse_type(event), message.created_at}
   end
 
   @doc """
@@ -34,7 +34,7 @@ defmodule AuctionIndexer.EventParser do
   end
 
   def parse_event(%{"Action" => "BUYOUT"} = event, message) do
-    {:buyout, event["AuctionId"], parse_buyout(event)}
+    {:buyout, event["AuctionId"], parse_buyout(event), message.created_at}
   end
 
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, message) do
