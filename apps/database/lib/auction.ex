@@ -34,23 +34,4 @@ defmodule Database.Auction do
   def was_bid_on?(%__MODULE__{bids: []}), do: false
   def was_bid_on?(%__MODULE__{bids: bids}), do: true
 
-  def patch_auction_if_exists(auction_id, change) do
-    auction = Database.Repo.get(__MODULE__, auction_id)
-    if auction do   
-      auction
-      |> __MODULE__.to_changeset(change) 
-      |> Database.Repo.update
-    end
-  end
-
-  def mark_auction_as_inactive(auction, type, sold) do
-    auction
-    |> Database.Auction.to_changeset(%{
-      sold: sold,
-      active: false,
-      type: type,
-      updated_at: DateTime.utc_now()
-    }) |> Database.Repo.update
-  end
-
 end

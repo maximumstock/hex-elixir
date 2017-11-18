@@ -51,10 +51,7 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp process(:ignore), do: nil
-  defp process({:new, changeset}) do
-    IO.inspect(changeset)
-    Database.Repo.insert(changeset)
-  end
-  defp process(changeset), do: Database.Repo.insert(changeset)
+  defp process({:new, changeset}), do: Database.Repo.insert(changeset)
+  defp process(changeset), do: Database.Repo.update(changeset)
 
 end
