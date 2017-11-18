@@ -41,59 +41,20 @@ defmodule AuctionIndexer.Worker do
     message = AuctionMessage.get_next_message()
     if message do
       Logger.info("Processing new auction message #{message.id}")
-      Enum.each(message.events, fn x ->
-        x |> AuctionIndexer.EventParser.parse_event(message) |> process()
+      Enum.each(message.events, fn event ->
+        auction = Database.Repo.get(Auction, event["AuctionId"])
+        AuctionIndexer.EventParser.parse_event(event, message, auction) |> process()
       end)
       AuctionMessage.mark_as_processed(message)
       run()
     end
   end
 
-  defp process({:new, new_auction}) do
-    Database.Repo.insert(new_auction)
+  defp process(:ignore), do: nil
+  defp process({:new, changeset}) do
+    IO.inspect(changeset)
+    Database.Repo.insert(changeset)
   end
-
-  defp process({:bid, auction_id, new_bid, bid_timestamp}) do
-    auction = Database.Repo.get(Auction, auction_id)
-    if auction do
-      change = %{
-        bids: auction.bids ++ [%{price: new_bid, created_at: bid_timestamp}],
-        updated_at: DateTime.utc_now(),
-        current_bid: new_bid
-      }
-      Auction.patch_auction_if_exists(auction_id, change)
-    end
-  end
-
-  defp process({:buyout, auction_id, new_buyout, updated_at}) do
-    change = %{
-      price: new_buyout,
-      updated_at: updated_at
-    }
-    Auction.patch_auction_if_exists(auction_id, change)
-  end
-
-  defp process({:sold, auction_id, type, updated_at}) do
-    change = %{
-      sold: true,
-      active: false,
-      type: type,
-      updated_at: updated_at
-    }
-    Auction.patch_auction_if_exists(auction_id, change)
-  end
-
-  defp process({:closed, auction_id, type, updated_at}) do
-    auction = Database.Repo.get(Auction, auction_id)
-    if auction do
-      change = %{
-        sold: length(auction.bids) > 0,
-        active: false,
-        type: type,
-        updated_at: updated_at
-      }
-      Auction.patch_auction_if_exists(auction_id, change)
-    end
-  end
+  defp process(changeset), do: Database.Repo.insert(changeset)
 
 end
