@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :database, ecto_repos: [Database.Repo],
+config :database, Database.Repo,
   adapter: Ecto.Adapters.Postgres,
   database: System.get_env("DBNAME") || "hex",
   username: System.get_env("DBUSER") || "hex",
