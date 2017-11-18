@@ -29,6 +29,7 @@ defmodule MessageIndexer.Mixfile do
       {:distillery, "~> 1.5"},
       {:poison, "~> 3.1"},
       {:plug, "~> 1.4"},
+      {:flow, "~> 0.11"},
       {:cowboy, "~> 1.1"},
       {:database, in_umbrella: true}
     ]
