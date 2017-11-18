@@ -12,7 +12,7 @@ defmodule AuctionIndexer.EventParser do
   This handles newly created auctions
   """
   def parse_event(%{"Action" => "POST"} = event, message, _auction) do
-    parse_new_auction(event, message)
+    {:new , parse_new_auction(event, message)}
   end
 
   @doc """
@@ -66,7 +66,7 @@ defmodule AuctionIndexer.EventParser do
   end
 
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, message) do
-    new_auction = %Database.Auction{
+    Database.Auction.to_changeset(%Database.Auction{}, %{
       id: id,
       active: true,
       item_uuid: item_uuid,
@@ -76,8 +76,7 @@ defmodule AuctionIndexer.EventParser do
       currency: parse_currency(event),
       created_at: message.created_at,
       updated_at: message.created_at
-    }
-    {:new, new_auction}
+    })
   end
 
   defp parse_buyout(%{"PlatBuyout" => "0", "GoldBuyout" => val}), do: String.to_integer(val)
