@@ -38,8 +38,9 @@ defmodule AuctionIndexer.Worker do
   end
 
   def run do
-    message = AuctionMessage.get_next_message()
-    if message do
+    messages = AuctionMessage.get_next_messages(1)
+    if length(messages) == 1 do
+      message = List.first(messages)
       Logger.info("Processing new auction message #{message.id}")
       Enum.each(message.events, fn event ->
         auction = Database.Repo.get(Auction, event["AuctionId"])

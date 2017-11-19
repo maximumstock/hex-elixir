@@ -36,12 +36,12 @@ defmodule Database.AuctionMessage do
     }
   end
 
-  def get_next_message do
+  def get_next_messages(limit \\ 1) do
     Database.AuctionMessage
     |> where([type: "Auction", was_processed: false])
     |> order_by([asc: :created_at])
-    |> first()
-    |> Database.Repo.one()
+    |> limit(^limit)
+    |> Database.Repo.all()
   end
 
   def mark_as_processed(message) do
