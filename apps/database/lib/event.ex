@@ -1,4 +1,4 @@
-defmodule Database.Event do
+defmodule Database.AuctionEvent do
 
   @moduledoc """
   Schema module for auction events
@@ -10,7 +10,7 @@ defmodule Database.Event do
   @required_fields [:message_id, :type, :data, :created_at]
   @optional_fiels  [:was_processed, :last_processed_at]
 
-  schema "events" do
+  schema "auction_events" do
     field :message_id, :string
     field :type, :string
     field :data, {:array, :map}
