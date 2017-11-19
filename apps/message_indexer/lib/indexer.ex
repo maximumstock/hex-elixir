@@ -1,41 +1,24 @@
 defmodule MessageIndexer.Indexer do
 
   @moduledoc """
-  GenServer that handles mapping and storing of offical HEX API messages
+  Logic that handles mapping and storing of offical HEX API messages
   """
 
-  use GenServer
   require Logger
-  alias Database.{Repo, AuctionMessage}
+  alias Database.{Repo, AuctionEvent}
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  def process_message(%{"MessageType" => "Auction"} = message) do
+    message["Events"]
+    |> Enum.map(&AuctionEvent.from_raw(message, &1))
+    |> Enum.each(&Repo.insert/1)
   end
 
-  def process_message(message) do
-    GenServer.cast(__MODULE__, {:process, message})
+  def process_message(%{"MessageId" => message_id, "MessageType" => type}) do
+    Logger.info("Dismissing message #{message_id} of type #{type}}")
   end
 
-  def handle_cast({:process, %{"MessageType" => "Auction"} = message}, state) do
-    auction_message = AuctionMessage.from_raw_message(message)
-    result = 
-      auction_message
-      |> AuctionMessage.to_changeset()
-      |> Repo.insert()
-    
-    case result do
-      {:error, %Ecto.Changeset{errors: [id: {"has already been taken", []}]}} ->
-        Logger.warn("Already persisted auction message #{auction_message.id}: Skipping")
-      {:error, changeset} ->
-        Logger.error("Error when persisting auction message #{auction_message.id}: #{inspect changeset.errors}")
-      _ -> :ok
-    end
-    {:noreply, state}
-  end
-
-  def handle_cast({:process, message}, state) do
-    Logger.info("Dismissing message #{message["MessageId"]} of type #{message["MessageType"]}")
-    {:noreply, state}
+  def process_message(_) do
+    Logger.warn("Message Indexer received something unusable")
   end
 
 end

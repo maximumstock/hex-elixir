@@ -9,8 +9,7 @@ defmodule MessageIndexer.Application do
     Logger.info("Starting message indexer")
 
     children = [
-      MessageIndexer.Router,
-      MessageIndexer.Indexer
+      MessageIndexer.Router
     ]
 
     opts = [strategy: :one_for_one, name: MessageIndexer.Supervisor]
