@@ -13,7 +13,7 @@ defmodule Database.AuctionEvent do
   schema "auction_events" do
     field :message_id, :string
     field :type, :string
-    field :data, {:array, :map}
+    field :data, :map
     field :created_at, :utc_datetime
     # optional
     field :was_processed, :boolean, default: false
