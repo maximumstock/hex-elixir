@@ -44,7 +44,7 @@ defmodule AuctionIndexer.Worker do
       Logger.info("Processing new auction message #{message.id}")
       Enum.each(message.events, fn event ->
         auction = Database.Repo.get(Auction, event["AuctionId"])
-        AuctionIndexer.EventParser.parse_event(event, message, auction) |> process()
+        AuctionIndexer.EventParser.parse_event(event, message.created_at, auction) |> process()
       end)
       AuctionMessage.mark_as_processed(message)
       run()
@@ -53,6 +53,6 @@ defmodule AuctionIndexer.Worker do
 
   defp process(:ignore), do: nil
   defp process({:new, changeset}), do: Database.Repo.insert(changeset)
-  defp process(changeset), do: Database.Repo.update(changeset)
+  defp process({_, changeset}), do: Database.Repo.update(changeset)
 
 end
