@@ -11,61 +11,61 @@ defmodule AuctionIndexer.EventParser do
   @doc """
   This handles newly created auctions
   """
-  def parse_event(%{"Action" => "POST"} = event, message, _auction) do
-    {:new , parse_new_auction(event, message)}
+  def parse_event(%{"Action" => "POST"} = event, timestamp, _auction) do
+    {:new , parse_new_auction(event, timestamp)}
   end
 
   @doc """
   Ignore all events there is no auction for (other than new auctions)
   """
-  def parse_event(_event, _message, nil), do: :ignore
+  def parse_event(_event, _timestamp, nil), do: :ignore
 
   @doc """
   `SOLD` and `CLOSE` handlers -> just export the corresponding auctions as sales
   """
-  def parse_event(%{"Action" => "SOLD"} = _event, message, auction) do
+  def parse_event(%{"Action" => "SOLD"} = _event, timestamp, auction) do
     change = %{
-      updated_at: message.created_at,
+      updated_at: timestamp,
       type: "Buyout",
       sold: true,
       active: false
     }
-    Database.Auction.to_changeset(auction, change)
+    {:sold, Database.Auction.to_changeset(auction, change)}
   end
 
-  def parse_event(%{"Action" => "CLOSE"} = _event, message, auction) do
+  def parse_event(%{"Action" => "CLOSE"} = _event, timestamp, auction) do
     change = %{
-      updated_at: message.created_at,
+      updated_at: timestamp,
       type: parse_closing_type(auction),
       active: false,
       sold: Database.Auction.was_bid_on?(auction),
       price: parse_closing_price(auction)
     }
-    Database.Auction.to_changeset(auction, change)
+    {:close, Database.Auction.to_changeset(auction, change)}
   end
 
   @doc """
   `BID` and `BUYOUT` handlers -> how did the price/bids for this auction change?
   """
-  def parse_event(%{"Action" => "BID"} = event, message, auction) do
+  def parse_event(%{"Action" => "BID"} = event, timestamp, auction) do
     new_bid = parse_bid(event)
     change = %{
-      updated_at: message.created_at,
-      bids: auction.bids ++ [%{price: new_bid, created_at: message.created_at}],
+      updated_at: timestamp,
+      bids: auction.bids ++ [%{price: new_bid, created_at: timestamp}],
       current_bid: new_bid
     }
-    Database.Auction.to_changeset(auction, change)
+    {:bid, Database.Auction.to_changeset(auction, change)}
   end
 
-  def parse_event(%{"Action" => "BUYOUT"} = event, message, auction) do
+  def parse_event(%{"Action" => "BUYOUT"} = event, timestamp, auction) do
     change = %{
-      updated_at: message.created_at,
+      updated_at: timestamp,
       price: parse_buyout(event)
     }
-    Database.Auction.to_changeset(auction, change)
+    {:buyout, Database.Auction.to_changeset(auction, change)}
   end
 
-  defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, message) do
+  defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, timestamp) do
     Database.Auction.to_changeset(%Database.Auction{}, %{
       id: id,
       active: true,
@@ -74,8 +74,8 @@ defmodule AuctionIndexer.EventParser do
       initial_bid: parse_bid(event),
       current_bid: parse_bid(event),
       currency: parse_currency(event),
-      created_at: message.created_at,
-      updated_at: message.created_at
+      created_at: timestamp,
+      updated_at: timestamp
     })
   end
 
@@ -97,7 +97,7 @@ defmodule AuctionIndexer.EventParser do
 
   defp parse_closing_type(auction) do
     case Database.Auction.was_bid_on?(auction) do
-      false -> nil
+      false -> "Timeout"
       true  -> "Bid"
     end
   end
