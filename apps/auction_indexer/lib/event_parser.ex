@@ -66,7 +66,7 @@ defmodule AuctionIndexer.EventParser do
   end
 
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, timestamp) do
-    Database.Auction.to_changeset(%Database.Auction{}, %{
+    %Database.Auction{
       id: id,
       active: true,
       item_uuid: item_uuid,
@@ -76,7 +76,7 @@ defmodule AuctionIndexer.EventParser do
       currency: parse_currency(event),
       created_at: timestamp,
       updated_at: timestamp
-    })
+    }
   end
 
   defp parse_buyout(%{"PlatBuyout" => "0", "GoldBuyout" => val}), do: String.to_integer(val)
