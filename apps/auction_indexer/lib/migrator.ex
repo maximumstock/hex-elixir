@@ -6,25 +6,29 @@ defmodule AuctionIndexer.Migrator do
   alias Database.Repo
 
   def start() do
-    migrate(%{active: %{}, done: []}, [])
+    migrate(%{active: %{}, done: []})
   end
 
-  defp migrate(state, []) do
-    # Before requesting the next batch, insert all done auctions
-    persist(state.done)
-    message_batch = Database.AuctionMessage.get_next_messages(50)
-    # Remove done auctions that were just persisted
-    migrate(%{state | done: []}, message_batch)
+  defp migrate(state) do
+    message_batch = Database.AuctionMessage.get_next_messages(1000)
+    new_state = parse_messages(state, message_batch)
+    persist(new_state.done)
+    Database.AuctionMessage.mark_as_processed(message_batch)
+
+    if length(message_batch) > 0 do
+      migrate(%{new_state | done: []})
+    end
   end
-  defp migrate(state, [next | rest]) do
+
+  defp parse_messages(state, []), do: state
+  defp parse_messages(state, [next | rest]) do
     new_state = AuctionHouse.process_message(state, next)
-    Database.AuctionMessage.mark_as_processed(next)
-    migrate(new_state, rest)
+    parse_messages(new_state, rest)
   end
 
   defp persist([]), do: :ok
   defp persist(list) do
-    {batch, rest} = Enum.split(list, 1000)
+    {batch, rest} = Enum.split(list, 5000)
     batch = Enum.map(batch, fn x -> 
       x = Map.from_struct(x)
       Map.delete(x, :__meta__)
