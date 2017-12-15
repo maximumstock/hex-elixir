@@ -44,7 +44,14 @@ defmodule Database.AuctionMessage do
     |> Database.Repo.all()
   end
 
-  def mark_as_processed(message) do
+  def mark_as_processed(messages) when is_list(messages) do
+    message_ids = Enum.map(messages, fn x -> x.id end)
+    Database.AuctionMessage
+    |> where([m], m.id in ^message_ids)
+    |> Database.Repo.update_all([set: [was_processed: true]])
+  end
+
+  def mark_as_processed(message) when is_map(message) do
     change = %{was_processed: true, last_processed_at: DateTime.utc_now()}
     message
     |> Ecto.Changeset.cast(change, Map.keys(change))
