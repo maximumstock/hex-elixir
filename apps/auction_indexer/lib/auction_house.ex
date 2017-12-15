@@ -7,10 +7,6 @@ defmodule AuctionIndexer.AuctionHouse do
 
   alias AuctionIndexer.EventParser
 
-  def process_message(%Database.AuctionMessage{} = message) do
-    process_message(%{active: %{}, sold: []}, message.events, message.created_at)
-  end
-
   def process_message(state, %Database.AuctionMessage{} = message) do
     process_message(state, message.events, message.created_at)
   end
@@ -29,27 +25,17 @@ defmodule AuctionIndexer.AuctionHouse do
   defp process_event(state, _parsed_event, nil), do: state
   defp process_event(state, {:bid,    changeset}, existing_auction),  do: update_record(state, existing_auction, changeset.changes)
   defp process_event(state, {:buyout, changeset}, existing_auction),  do: update_record(state, existing_auction, changeset.changes)
-  defp process_event(state, {:sold,   changeset}, existing_auction),  do: add_sold_auction(state, existing_auction, changeset.changes)
-  defp process_event(state, {:close,  changeset}, existing_auction),  do: add_closed_auction(state, existing_auction, changeset.changes)
+  defp process_event(state, {_,   changeset}, existing_auction),  do: add_done_auction(state, existing_auction, changeset.changes)
 
   defp update_record(state, existing_auction, changes) do
     updated_auction = Map.merge(existing_auction, changes)
     %{state | active: Map.put(state.active, updated_auction.id, updated_auction)}
   end
 
-  defp add_sold_auction(state, existing_auction, changes) do
+  defp add_done_auction(state, existing_auction, changes) do
     new_active = Map.delete(state.active, existing_auction.id)
-    sold_auction = Map.merge(existing_auction, changes)
-    %{active: new_active, sold: state.sold ++ [sold_auction]}
+    done_auction = Map.merge(existing_auction, changes)
+    %{active: new_active, done: state.done ++ [done_auction]}
   end
-
-  defp add_closed_auction(state, existing_auction, %{sold: true} = changes) do
-    add_sold_auction(state, existing_auction, changes)
-  end
-  defp add_closed_auction(state, existing_auction, _changes) do
-    new_active = Map.delete(state.active, existing_auction.id)
-    %{state | active: new_active}
-  end
-
 
 end
