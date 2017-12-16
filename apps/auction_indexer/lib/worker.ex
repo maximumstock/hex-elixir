@@ -52,7 +52,8 @@ defmodule AuctionIndexer.Worker do
   end
 
   defp process(:ignore), do: nil
-  defp process({:new, changeset}), do: Database.Repo.insert(changeset)
+  # ignore primary key constraint errors
+  defp process({:new, changeset}), do: Database.Repo.insert(changeset, [on_conflict: :nothing])
   defp process({_, changeset}), do: Database.Repo.update(changeset)
 
 end
