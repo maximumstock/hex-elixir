@@ -5,12 +5,11 @@ defmodule AuctionIndexer.Migrator do
   alias AuctionIndexer.AuctionHouse
   alias Database.Repo
 
-  def start() do
-    migrate(%{active: %{}, done: []})
-  end
+  def start(), do: migrate(%{active: %{}, done: []})
+  def start(state), do: migrate(state)
 
   defp migrate(state) do
-    message_batch = Database.AuctionMessage.get_next_messages(1000)
+    message_batch = Database.AuctionMessage.get_next_messages(100)
     new_state = parse_messages(state, message_batch)
     persist(new_state.done)
     Database.AuctionMessage.mark_as_processed(message_batch)
