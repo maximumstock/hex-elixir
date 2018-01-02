@@ -7,6 +7,12 @@ defmodule AuctionIndexer.AuctionHouse do
 
   alias AuctionIndexer.EventParser
 
+  def process(state, [] = messages), do: state
+  def process(state, [next|rest] = messages) do
+    new_state = process_message(state, next)
+    process(new_state, rest)
+  end
+  
   def process_message(state, %Database.AuctionMessage{} = message) do
     process_message(state, message.events, message.created_at)
   end
