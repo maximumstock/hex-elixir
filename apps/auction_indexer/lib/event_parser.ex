@@ -72,7 +72,6 @@ defmodule AuctionIndexer.EventParser do
       item_uuid: item_uuid,
       initial_buyout: parse_buyout(event),
       initial_bid: parse_bid(event),
-      current_bid: parse_bid(event),
       currency: parse_currency(event),
       created_at: timestamp,
       updated_at: timestamp

@@ -13,7 +13,7 @@ defmodule Database.Auction do
     field :item_uuid, :string
     field :initial_buyout, :integer
     field :initial_bid, :integer
-    field :current_bid, :integer
+    field :current_bid, :integer, default: nil
     field :currency, :string
     field :type, :string, default: "tbd"
     field :price, :integer, default: 0
