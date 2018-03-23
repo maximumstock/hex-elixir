@@ -1,25 +1,12 @@
 defmodule MessageIndexer.Indexer do
 
-  @moduledoc """
-  GenServer that handles mapping and storing of offical HEX API messages
-  """
-
-  use GenServer
   require Logger
   alias Database.{Repo, AuctionMessage}
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
-  end
-
-  def process_message(message) do
-    GenServer.cast(__MODULE__, {:process, message})
-  end
-
-  def handle_cast({:process, %{"MessageType" => "Auction"} = message}, state) do
+  def process_message(%{"MessageType" => "Auction"} = message) do
     auction_message = AuctionMessage.from_raw_message(message)
-    result = 
-      auction_message
+    result = message
+      |> AuctionMessage.from_raw_message()
       |> AuctionMessage.to_changeset()
       |> Repo.insert()
     
@@ -30,12 +17,10 @@ defmodule MessageIndexer.Indexer do
         Logger.error("Error when persisting auction message #{auction_message.id}: #{inspect changeset.errors}")
       _ -> :ok
     end
-    {:noreply, state}
   end
 
-  def handle_cast({:process, message}, state) do
+  def process_message(message) do
     Logger.info("Dismissing message #{message["MessageId"]} of type #{message["MessageType"]}")
-    {:noreply, state}
   end
 
 end
