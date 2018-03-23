@@ -1,0 +1,20 @@
+* auction_indexer
+** TODO Rewrite migration processing
+   Migration should work as in `hexsales-api/updater.js`. It should
+   check for which days to migrate and then update the `auctions`
+   table for each day (divide-and-conquer).
+
+   A separate interface offers functionality to fill the `auctions`
+   table for a specific day. This is achieved by reading all messages
+   for that day and the two preceding days and using the in-memory
+   AH module for parsing sold auctions. For example, doing this for
+   2017-11-{12, 13, 14} results in a list of finished auctions for
+   these three days. Filtering out all that whose `updated_at` field
+   points to 2017-11-14 leaves all done auctions on 2017-11-14.
+
+   Later additional comfort functionality can be introduced, which
+   intelligently groups a list of dates to update for in groups
+   of following dates, so database reads can be minimized.
+
+** TODO Make sure `EventParser` and `AuctionHouse` work correctly
+   Test all `parse_event` calls of `EventParser`
