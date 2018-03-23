@@ -9,7 +9,7 @@ defmodule MessageIndexer.Mixfile do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.5",
+      elixir: "~> 1.6",
       start_permanent: Mix.env == :prod,
       deps: deps()
     ]
@@ -28,9 +28,8 @@ defmodule MessageIndexer.Mixfile do
     [
       {:distillery, "~> 1.5"},
       {:poison, "~> 3.1"},
-      {:plug, "~> 1.4"},
-      {:flow, "~> 0.11"},
-      {:cowboy, "~> 1.1"},
+      {:plug, "~> 1.5"},
+      {:cowboy, "~> 2.2"},
       {:database, in_umbrella: true}
     ]
   end
