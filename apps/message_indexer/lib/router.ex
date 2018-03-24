@@ -14,10 +14,11 @@ defmodule MessageIndexer.Router do
 
   post "/" do
     {:ok, body, conn} = Plug.Conn.read_body(conn)
-    
-    body
-    |> Poison.decode!
-    |> Indexer.process_message
+
+    case Poison.decode(body) do
+      {:ok, decoded} -> Indexer.process_message(decoded)
+      _              -> Logger.warn("Could not parse request body")
+    end
 
     send_resp(conn, 200, "ok")
   end

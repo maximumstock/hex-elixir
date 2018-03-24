@@ -18,7 +18,7 @@ defmodule MessageIndexer.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :cowboy, :plug],
       mod: {MessageIndexer.Application, []}
     ]
   end
@@ -29,7 +29,7 @@ defmodule MessageIndexer.Mixfile do
       {:distillery, "~> 1.5"},
       {:poison, "~> 3.1"},
       {:plug, "~> 1.5"},
-      {:cowboy, "~> 2.2"},
+      {:cowboy, "~> 1.1.2"},
       {:database, in_umbrella: true}
     ]
   end

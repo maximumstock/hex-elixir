@@ -16,10 +16,7 @@ defmodule MessageIndexer.Migrator do
     IO.puts("Reading file #{filepath}")
     {:ok, raw_binary} = File.read(filepath)
     {:ok, json} = Poison.decode(to_string(raw_binary))
-    Enum.each(json, &__MODULE__.send/1)
+    Enum.each(json, &MessageIndexer.Indexer.process_message/1)
   end
-
-  def send(%{"MessageType" => "Auction"} = message), do: MessageIndexer.Indexer.process_message(message)
-  def send(_), do: nil
 
 end
