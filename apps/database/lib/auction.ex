@@ -15,7 +15,7 @@ defmodule Database.Auction do
     field :initial_bid, :integer
     field :current_bid, :integer, default: nil
     field :currency, :string
-    field :type, :string, default: "tbd"
+    field :type, :string, default: nil
     field :price, :integer, default: 0
     field :sold, :boolean, default: false
     field :active, :boolean, default: true

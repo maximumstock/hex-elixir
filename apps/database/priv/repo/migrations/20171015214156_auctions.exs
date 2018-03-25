@@ -9,7 +9,7 @@ defmodule Database.Repo.Migrations.Auctions do
       add :initial_bid, :integer
       add :current_bid, :integer
       add :currency, :string
-      add :type, :string, default: "tbd"
+      add :type, :string, default: nil
       add :price, :integer, default: 0
       add :sold, :boolean, default: false
       add :active, :boolean, default: true
