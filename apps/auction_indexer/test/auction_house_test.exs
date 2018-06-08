@@ -16,7 +16,7 @@ defmodule AuctionHouseTest do
   #   {:ok, raw2} = File.read("#{path}/2017-09-29.json")
   #   messages =
   #     Poison.decode!(raw0) ++ Poison.decode!(raw1) ++ Poison.decode!(raw2)
-  #  		|> Enum.map(fn x -> AuctionMessage.from_raw_message(x) end) 
+  #  		|> Enum.map(fn x -> AuctionMessage.from_raw_message(x) end)
   #   assert length(messages) > 0
   #   %{done: done} = AuctionHouse.process(%{active: %{}, done: []}, messages)
   #   sold_09_29 = Enum.filter(done, fn x ->
@@ -25,5 +25,5 @@ defmodule AuctionHouseTest do
   #   end)
   #   assert length(sold_09_29) == 2603
   # end
-  
+
 end

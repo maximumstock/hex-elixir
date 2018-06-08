@@ -5,8 +5,10 @@ defmodule Database.Auction do
   """
 
   use Ecto.Schema
+  alias Ecto.Changeset
 
-  @fields [:id, :item_uuid, :initial_buyout, :initial_bid, :current_bid, :currency, :type, :price, :sold, :active, :bids, :created_at, :updated_at]
+  @fields [:id, :item_uuid, :initial_buyout, :initial_bid, :current_bid,
+    :currency, :type, :price, :sold, :active, :bids, :created_at, :updated_at]
   @primary_key {:id, :string, autogenerate: false}
 
   schema "auctions" do
@@ -26,12 +28,12 @@ defmodule Database.Auction do
 
   def to_changeset(struct, params \\ %{}) do
     struct
-    |> Ecto.Changeset.cast(params, @fields)
-    |> Ecto.Changeset.validate_required(@fields)
-    |> Ecto.Changeset.unique_constraint(:id, [name: :auctions_pkey])
+    |> Changeset.cast(params, @fields)
+    |> Changeset.validate_required(@fields)
+    |> Changeset.unique_constraint(:id, [name: :auctions_pkey])
   end
 
   def was_bid_on?(%__MODULE__{bids: []}), do: false
-  def was_bid_on?(%__MODULE__{bids: bids}), do: true
+  def was_bid_on?(%__MODULE__{bids: _bids}), do: true
 
 end

@@ -4,12 +4,13 @@ defmodule MessageIndexer.Application do
 
   use Application
   require Logger
+  alias MessageIndexer.Router
 
   def start(_type, _args) do
     Logger.info("Starting message indexer")
 
     children = [
-      MessageIndexer.Router
+      Router
     ]
 
     opts = [strategy: :one_for_one, name: MessageIndexer.Supervisor]

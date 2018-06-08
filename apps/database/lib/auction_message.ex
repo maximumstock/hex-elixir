@@ -6,6 +6,8 @@ defmodule Database.AuctionMessage do
 
   use Ecto.Schema, Timex
   import Ecto.Query
+  alias Ecto.Changeset
+  alias Database.{AuctionMessage, Repo}
 
   @required_fields [:id, :type, :events, :created_at]
   @optional_fiels  [:was_processed, :last_processed_at]
@@ -22,9 +24,9 @@ defmodule Database.AuctionMessage do
 
   def to_changeset(struct, params \\ %{}) do
     struct
-    |> Ecto.Changeset.cast(params, @required_fields ++ @optional_fiels)
-    |> Ecto.Changeset.validate_required(@required_fields)
-    |> Ecto.Changeset.unique_constraint(:id, [name: :messages_pkey])
+    |> Changeset.cast(params, @required_fields ++ @optional_fiels)
+    |> Changeset.validate_required(@required_fields)
+    |> Changeset.unique_constraint(:id, [name: :messages_pkey])
   end
 
   def from_raw_message(raw_message) do
@@ -37,25 +39,27 @@ defmodule Database.AuctionMessage do
   end
 
   def get_next_messages(limit \\ 1) do
-    Database.AuctionMessage
+    AuctionMessage
     |> where([type: "Auction", was_processed: false])
     |> order_by([asc: :created_at])
     |> limit(^limit)
-    |> Database.Repo.all()
+    |> Repo.all()
   end
 
   def mark_as_processed(messages) when is_list(messages) do
     message_ids = Enum.map(messages, fn x -> x.id end)
-    Database.AuctionMessage
+    AuctionMessage
     |> where([m], m.id in ^message_ids)
-    |> Database.Repo.update_all([set: [was_processed: true, last_processed_at: DateTime.utc_now()]])
+    |> Repo.update_all(
+      [set: [was_processed: true, last_processed_at: DateTime.utc_now()]]
+      )
   end
 
   def mark_as_processed(message) when is_map(message) do
     change = %{was_processed: true, last_processed_at: DateTime.utc_now()}
     message
-    |> Ecto.Changeset.cast(change, Map.keys(change))
-    |> Database.Repo.update()
+    |> Changeset.cast(change, Map.keys(change))
+    |> Repo.update()
   end
 
   def parse_datetime(datetime) do

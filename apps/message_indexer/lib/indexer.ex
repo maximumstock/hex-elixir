@@ -1,5 +1,9 @@
 defmodule MessageIndexer.Indexer do
 
+  @moduledoc """
+  Module for handling HEX API messages
+  """
+
   require Logger
   alias Database.{Repo, AuctionMessage}
 
@@ -9,7 +13,7 @@ defmodule MessageIndexer.Indexer do
       |> AuctionMessage.from_raw_message()
       |> AuctionMessage.to_changeset()
       |> Repo.insert()
-    
+
     case result do
       {:error, %Ecto.Changeset{errors: [id: {"has already been taken", []}]}} ->
         Logger.warn("Already persisted auction message #{auction_message.id}: Skipping")

@@ -8,13 +8,15 @@ defmodule AuctionIndexer.EventParser do
   AuctionIndexer.Worker to update the database accordingly.
   """
 
+  alias Database.Auction
+
   @doc """
   This handles newly created auctions
   """
   def parse_event(%{"Action" => "POST"} = event, timestamp, nil) do
     {:new , parse_new_auction(event, timestamp)}
   end
-  def parse_event(%{"Action" => "POST"} = event, timstamp, auction) do
+  def parse_event(%{"Action" => "POST"}, _timstamp, _auction) do
     raise "There should not be existing auctions for POST events"
   end
 
@@ -33,7 +35,7 @@ defmodule AuctionIndexer.EventParser do
       sold: true,
       active: false
     }
-    {:sold, Database.Auction.to_changeset(auction, change)}
+    {:sold, Auction.to_changeset(auction, change)}
   end
 
   def parse_event(%{"Action" => "CLOSE"} = _event, timestamp, auction) do
@@ -41,10 +43,10 @@ defmodule AuctionIndexer.EventParser do
       updated_at: timestamp,
       type: parse_closing_type(auction),
       active: false,
-      sold: Database.Auction.was_bid_on?(auction),
+      sold: Auction.was_bid_on?(auction),
       price: parse_closing_price(auction)
     }
-    {:close, Database.Auction.to_changeset(auction, change)}
+    {:close, Auction.to_changeset(auction, change)}
   end
 
   @doc """
@@ -57,7 +59,7 @@ defmodule AuctionIndexer.EventParser do
       bids: auction.bids ++ [%{price: new_bid, created_at: timestamp}],
       current_bid: new_bid
     }
-    {:bid, Database.Auction.to_changeset(auction, change)}
+    {:bid, Auction.to_changeset(auction, change)}
   end
 
   def parse_event(%{"Action" => "BUYOUT"} = event, timestamp, auction) do
@@ -65,11 +67,11 @@ defmodule AuctionIndexer.EventParser do
       updated_at: timestamp,
       price: parse_buyout(event)
     }
-    {:buyout, Database.Auction.to_changeset(auction, change)}
+    {:buyout, Auction.to_changeset(auction, change)}
   end
 
   defp parse_new_auction(%{"AuctionId" => id, "Item" => item_uuid} = event, timestamp) do
-    %Database.Auction{
+    %Auction{
       id: id,
       active: true,
       item_uuid: item_uuid,
@@ -91,14 +93,14 @@ defmodule AuctionIndexer.EventParser do
   defp parse_currency(%{"GoldBuyout" => gbuy, "GoldBid" => gbid}) when gbuy != "0" or gbid != "0", do: "Gold"
 
   defp parse_closing_price(auction) do
-    case Database.Auction.was_bid_on?(auction) do
+    case Auction.was_bid_on?(auction) do
       false -> nil
       true -> auction.bids |> List.last() |> Map.get("price", nil)
     end
   end
 
   defp parse_closing_type(auction) do
-    case Database.Auction.was_bid_on?(auction) do
+    case Auction.was_bid_on?(auction) do
       false -> "Timeout"
       true  -> "Bid"
     end

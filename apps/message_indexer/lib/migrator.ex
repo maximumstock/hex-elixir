@@ -5,6 +5,8 @@ defmodule MessageIndexer.Migrator do
   the message indexer web interface
   """
 
+  alias MessageIndexer.Indexer
+
   def run_all(directory) do
     {:ok, files} = File.ls(directory)
     files
@@ -16,7 +18,7 @@ defmodule MessageIndexer.Migrator do
     IO.puts("Reading file #{filepath}")
     {:ok, raw_binary} = File.read(filepath)
     {:ok, json} = Poison.decode(to_string(raw_binary))
-    Enum.each(json, &MessageIndexer.Indexer.process_message/1)
+    Enum.each(json, &Indexer.process_message/1)
   end
 
 end
