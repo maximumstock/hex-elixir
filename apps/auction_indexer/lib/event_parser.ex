@@ -16,8 +16,9 @@ defmodule AuctionIndexer.EventParser do
   def parse_event(%{"Action" => "POST"} = event, timestamp, nil) do
     {:new , parse_new_auction(event, timestamp)}
   end
-  def parse_event(%{"Action" => "POST"}, _timstamp, _auction) do
-    raise "There should not be existing auctions for POST events"
+  def parse_event(%{"Action" => "POST"}, _timestamp, %Auction{}) do
+    # Ignore all events for new auctions if the preloaded auction is not null
+    :ignore
   end
 
   @doc """
