@@ -1,5 +1,7 @@
 # hex-elixir
 
+**HEX died out over the last months, so this project is irrelevant now :(**
+
 An Elixir umbrella application, containing various services for the HEX TCG, which includes:
 
 - `message_indexer`: a webserver that indexes all API messages from the official HEX API
